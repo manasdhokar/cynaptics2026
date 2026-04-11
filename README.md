@@ -68,7 +68,7 @@ Because the BPE model starts with a much higher "uncertainty floor," its final l
 
 ### Comparison Summary
 
-| Metric | Character-Level Baseline | Your BPE Model |
+| Metric | Character-Level Baseline | BPE Model |
 | :--- | :--- | :--- |
 | **Vocab Size** | 65 | **256** |
 | **Information per Step** | 1 Character | **~2.5 Characters** |
