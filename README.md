@@ -1,4 +1,4 @@
-# Shakespeare-GPT: An Iterative Study in BPE & Architecture Scaling
+# Shakespeare-GPT: An Iterative Study in BPE & Architecture Scaling (Task 1 only)
 
 This repository documents the development of a decoder-only Transformer model trained on the Tiny Shakespeare corpus. This project is a hands-on exploration of the transition from character-level baselines to sub-word tokenization and the engineering trade-offs of model scaling.
 
