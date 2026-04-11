@@ -13,6 +13,7 @@ The project began with a "from-scratch" implementation of the core components of
 
 ### 2. The BPE Pivot (Sub-word Tokenization)
 Moving beyond the character-level limitations (Vocab ~65) often used in basic tutorials, I implemented a custom **Byte-Pair Encoding (BPE)** tokenizer which I learned via this post on medium: https://medium.com/@adarsh-ai/build-a-byte-pair-encoding-bpe-tokenizer-from-scratch-in-python-0dc32c6410f7
+* **Change made to the BPE** Used re.findall(r"\w+|[^\w\s]", text) instead of text.split(" ") to separate all the words, special characters and \n properly.
 * **Implementation:** Based on architectural insights from the community, I developed a BPE logic that performs 190 merges on the raw text.
 * **The Advantage:** With a vocabulary size of **256**, the model achieves higher information density. Each token represents larger semantic chunks (common words/suffixes), effectively extending the model's functional context window within the same 256-block size.
 
@@ -79,7 +80,24 @@ Because the BPE model starts with a much higher "uncertainty floor," its final l
 
 
 
-### Sample Generation
+### Sample Generation with output with roughly 10.8M parameters, Byte pair encoding separated words and special chars, no scheduling, step 4500: train loss 1.1427, val loss 1.4735
+
+But hedite your guards, and spirts it;
+Shame like your words she not made your child;
+But therefore the ride I shall over
+And prove thee unterpose them some violent
+As never he to could No wish live,
+I think it bounds; and even expreseming
+My beauteous trenching to the rist!
+It must be dann't: four, and let them note
+and riches shop the penveon of that blood
+In the hount so off this very-state, lawn, fair!
+What's Cominius service? Lords, what shows maist!
+My lord are it some opposite; and therefore
+The mighty, but you'll are the injuret
+Than to the half sil'd itnow who sevention;
+But you would do more scand to suffer the blood.
+
 SICINIUS:
 Nay, sir, it is my true night.
 
@@ -91,9 +109,11 @@ Fetches, good privated being.
 Go to, let not us to-morrow the pestor shade
 But lie that recencies you shall intent me.
 Lo, not the rest,--doemight of disance,
-For fortunation! I'll give my such palace.....
+For fortunation! I'll give my such palace....
+
 ---
 
 ## Future Roadmap
 * **Optimization Phase:** Introducing a Cosine Decay scheduler to further "polish" the final weights.
 * **Regularization Ablation:** Testing the impact of Weight Decay (0.1) vs. the current zero-decay baseline.
+* Adding rotatory positional embeddings
