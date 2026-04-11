@@ -118,4 +118,4 @@ For fortunation! I'll give my such palace....
 * **Regularization Ablation:** Testing the impact of Weight Decay (0.1) vs. the current zero-decay baseline.
 * Adding rotatory positional embeddings
 
-* Please do not mind the comments since they are for my understanding.
+Please do not mind the comments since they are for my understanding.
