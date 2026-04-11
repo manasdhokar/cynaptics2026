@@ -117,3 +117,5 @@ For fortunation! I'll give my such palace....
 * **Optimization Phase:** Introducing a Cosine Decay scheduler to further "polish" the final weights.
 * **Regularization Ablation:** Testing the impact of Weight Decay (0.1) vs. the current zero-decay baseline.
 * Adding rotatory positional embeddings
+
+* Please do not mind the comments since they are for my understanding.
