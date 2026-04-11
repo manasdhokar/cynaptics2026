@@ -14,7 +14,7 @@ The project began with a "from-scratch" implementation of the core components of
 ### 2. The BPE Pivot (Sub-word Tokenization)
 Moving beyond the character-level limitations (Vocab ~65) often used in basic tutorials, I implemented a custom **Byte-Pair Encoding (BPE)** tokenizer which I learned via this post on medium: https://medium.com/@adarsh-ai/build-a-byte-pair-encoding-bpe-tokenizer-from-scratch-in-python-0dc32c6410f7
 * **Change made to the BPE** Used re.findall(r"\w+|[^\w\s]", text) instead of text.split(" ") to separate all the words, special characters and \n properly.
-* **Implementation:** Based on architectural insights from the community, I developed a BPE logic that performs 190 merges on the raw text.
+* **Implementation:** Based on architectural insights from the community, implemented a BPE that performs 190 merges on the raw text.
 * **The Advantage:** With a vocabulary size of **256**, the model achieves higher information density. Each token represents larger semantic chunks (common words/suffixes), effectively extending the model's functional context window within the same 256-block size.
 
 ### 3. Scaling & Parameter Tuning
