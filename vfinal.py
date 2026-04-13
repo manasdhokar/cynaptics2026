@@ -5,16 +5,16 @@ import collections
 
 # hyperparameters
 batch_size = 64 # how many independent sequences will we process in parallel?
-block_size = 256 # what is the maximum context length for predictions?
+block_size = 128 # what is the maximum context length for predictions?
 max_iters = 5000
 eval_interval = 500
 learning_rate = 3e-4
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 eval_iters = 200
 n_embd= 384 
-n_head=6 
-n_layer=6
-dropout=0.25
+n_head=4
+n_layer=4
+dropout=0.3
 # ------------
 
 torch.manual_seed(1337)
@@ -111,7 +111,7 @@ itos = { i:ch for i,ch in enumerate(chars) }
 
 
 def encode(text):
-    words = re.findall(r"\w+|[^\w\s]", text)
+    words = re.findall(r"\w+|[^\w\s]|\s+", text)
     tokens = []
     
     for w in words:
@@ -135,7 +135,7 @@ def encode(text):
 def decode(tokens):
     words = [itos[t] for t in tokens]
     text = ''.join(words)
-    text = text.replace(endw, ' ')  # replace end of word marker with space
+    text = text.replace(endw, '')  # replace end of word marker with space
     return text
 
 
