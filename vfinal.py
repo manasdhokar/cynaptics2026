@@ -11,7 +11,7 @@ eval_interval = 500
 learning_rate = 3e-4
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 eval_iters = 200
-n_embd= 384
+n_embd= 384 
 n_head=6 
 n_layer=6
 dropout=0.25
@@ -19,7 +19,8 @@ dropout=0.25
 
 torch.manual_seed(1337)
 
-#tokenizer
+#tokenizer 
+from datasets import load_dataset
 with open('data/input.txt', 'r', encoding='utf-8') as f:
     text = f.read() #converts to string
 
@@ -107,8 +108,36 @@ vocab_size = len(chars)
 # create a mapping from characters to integers
 stoi = { ch:i for i,ch in enumerate(chars) }
 itos = { i:ch for i,ch in enumerate(chars) }
-encode = lambda s: [stoi[c] for c in s] # encoder: take a string, output a list of integers
-decode = lambda l: ''.join([itos[i] for i in l]) # decoder: take a list of integers, output a string
+
+
+def encode(text):
+    words = re.findall(r"\w+|[^\w\s]", text)
+    tokens = []
+    
+    for w in words:
+        symbols = list(w) + [endw]
+        
+        # apply merges in same order they were learned
+        for (first, second) in merges.keys():
+            i = 0
+            while i < len(symbols) - 1:
+                if symbols[i] == first and symbols[i+1] == second:
+                    merged = first + second
+                    symbols = symbols[:i] + [merged] + symbols[i+2:]
+                else:
+                    i += 1
+        
+        tokens.extend([stoi[s] for s in symbols if s in stoi])
+    
+    return tokens
+
+
+def decode(tokens):
+    words = [itos[t] for t in tokens]
+    text = ''.join(words)
+    text = text.replace(endw, ' ')  # replace end of word marker with space
+    return text
+
 
 # Train and test splits
 data = torch.tensor(encode(text), dtype=torch.long)
@@ -126,18 +155,18 @@ def get_batch(split):
     x, y = x.to(device), y.to(device)
     return x, y
 
-@torch.no_grad()
+@torch.no_grad()     #this entire blkci is to chek how good the model is working at step x wtihout training it. torch.no_grad() disables gradient tracking
 def estimate_loss():
     out = {}
-    model.eval()
+    model.eval() #disables doropout
     for split in ['train', 'val']:
         losses = torch.zeros(eval_iters)
         for k in range(eval_iters):
             X, Y = get_batch(split)
             logits, loss = model(X, Y)
             losses[k] = loss.item()
-        out[split] = losses.mean()
-    model.train()
+        out[split] = losses.mean()  #the loss you see is mean of the number of evaluation iterations not the final loss
+    model.train() #enables dropout. ie model shifts to training mode.
     return out
 
 class Head(nn.Module):
@@ -155,7 +184,7 @@ class Head(nn.Module):
         q= self.query(x)
 
         wei= q @ k.transpose(-2,-1)*C**-0.5 #GIVES B,T,T
-        wei= wei.masked_fill(self.tril[:T, :T] == 0, float('-inf'))
+        wei= wei.masked_fill(self.tril[:T, :T] == 0, float('-inf')) 
         wei= F.softmax(wei, dim=-1) #created the attention scores BTT 
         wei= self.dropout(wei)
 
@@ -208,7 +237,7 @@ class Block(nn.Module):
 
 
 
-# super simple bigram model
+
 class BigramLanguageModel(nn.Module):
 
     def __init__(self):
@@ -278,9 +307,9 @@ for iter in range(max_iters):
 
     # evaluate the loss
     logits, loss = model(xb, yb)
-    optimizer.zero_grad(set_to_none=True)
-    loss.backward()
-    optimizer.step()
+    optimizer.zero_grad(set_to_none=True) #set to zero
+    loss.backward() #fresh gradients calculated for current loss
+    optimizer.step() #model parameters updated (embedding table, all the weights, biases etc) not logits as they are computed and are not the learnable parameters.
 
 # generate from the model
 context = torch.zeros((1, 1), dtype=torch.long, device=device)
