@@ -1,124 +1,99 @@
-# Shakespeare-GPT: An Iterative Study in BPE & Architecture Scaling (Task 1 only)
+# TinyStories GPT — 11.6M Parameter Transformer From Scratch
 
-This repository documents the development of a decoder-only Transformer model trained on the Tiny Shakespeare corpus. This project is a hands-on exploration of the transition from character-level baselines to sub-word tokenization and the engineering trade-offs of model scaling.
+A GPT-style language model built **from scratch in Python using PyTorch**, trained on a subset of the [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories) dataset.
 
-## 🛠️ The Development Journey
+The model has **11.6M parameters** and is capable of generating coherent, grammatically correct children's stories.
 
-### 1. Architectural Foundations
-The project began with a "from-scratch" implementation of the core components of the Transformer architecture, moving beyond simple Bigram models to a full Attention-based system. Key modules implemented include:
-* **Causal Self-Attention:** Implementing the query, key, and value matrices with causal masking.
-* **Multi-Head Attention:** Parallelizing attention heads to capture diverse linguistic relationships.
-* **Residual Blocks & LayerNorm:** Ensuring stable signal flow through deep layers.
-* All of this implemented by referring andrej karpathy's youtube video
+## Overview
 
-### 2. The BPE Pivot (Sub-word Tokenization)
-Moving beyond the character-level limitations (Vocab ~65) often used in basic tutorials, I implemented a custom **Byte-Pair Encoding (BPE)** tokenizer which I learned via this post on medium: https://medium.com/@adarsh-ai/build-a-byte-pair-encoding-bpe-tokenizer-from-scratch-in-python-0dc32c6410f7
-* **Change made to the BPE** Used re.findall(r"\w+|[^\w\s]", text) instead of text.split(" ") to separate all the words, special characters and \n properly.
-* **Implementation:** Based on architectural insights from the community, implemented a BPE that performs 190 merges on the raw text.
-* **The Advantage:** With a vocabulary size of **256**, the model achieves higher information density. Each token represents larger semantic chunks (common words/suffixes), effectively extending the model's functional context window within the same 256-block size.
+I initially started this project by following Andrej Karpathy's [Neural Networks: Zero to Hero](https://lnkd.in/dwQGfujw) video series, where the initial model was trained on the **Tiny Shakespeare** dataset (~1 MB).
 
-### 3. Scaling & Parameter Tuning
-A significant portion of this project was dedicated to finding the "Goldilocks" zone for model capacity:
-* **The 24M Experiment:** I initially scaled the model to **24 Million parameters**. However, on the 1MB Shakespeare dataset, this led to immediate and severe overfitting. The model memorized the training set (Loss ~1.10) while failing to generalize to the validation set.
-* **The Strategic Downscale:** To combat this, I pivoted to the current **10.8M parameter** configuration. This "Medium" model acts as a natural bottleneck, forcing the Transformer to learn generalizable patterns rather than verbatim lines.
+From there, I progressively extended the architecture and training pipeline to build a more capable GPT-style language model.
 
----
+The main goal was to understand how modern language models work by implementing the core components myself rather than relying on existing tokenizer or model libraries.
 
-## 🏗️ Model Specifications
+## Features
 
-| Component | Specification |
-| :--- | :--- |
-| **Model Size** | ~10.8 Million Parameters |
-| **$n_{embd}$** | 384 |
-| **$n_{head}$** | 6 (64-dim per head) |
-| **$n_{layer}$** | 6 |
-| **Dropout** | 0.25 |
-| **Vocab Size** | 256 (BPE-encoded) |
+- **11.6M parameter GPT-style Transformer**
+- Transformer architecture implemented from scratch in PyTorch
+- **BPE tokenizer implemented from scratch**
+- Top-K sampling
+- Temperature scaling
+- Cosine learning-rate scheduling
+- **SwiGLU** activation in the Feed-Forward Network
+- Custom dataset preprocessing pipeline
+- Binary token storage using memory-mapped files
+- Multiprocessing for faster dataset preprocessing
+- Training and validation loss tracking
+- GPU training using Modal
 
-## 📉 Optimization Strategy: The Baseline
-This iteration of the model serves as a **Stable Architecture Baseline**. To isolate the performance impact of the BPE tokenizer and architecture scaling, the following constraints were maintained:
-* **Constant Learning Rate:** A fixed learning rate of `3e-4` was used to observe the raw convergence behavior of the architecture without scheduler intervention.
-* **AdamW (Zero Decay):** The optimizer was run without explicit weight decay to establish a baseline for generalization provided solely by **Dropout (0.25)** and architectural bottlenecks.
+## Architecture
 
----
+The model uses a decoder-only Transformer architecture consisting of:
 
-## 📂 Project Structure
+- Token embeddings
+- Positional embeddings
+- Multi-head self-attention
+- Feed-forward networks using **SwiGLU**
+- Residual connections
+- Layer normalization
+- Linear language-model head
 
-* `vfinal.py`: Unified script containing the BPE merging logic, Transformer architecture, and training loop.
-* `data/input.txt`: The Tiny Shakespeare corpus.
-* `README.md`: Documentation of the engineering process and findings.
+### Model Configuration
 
----
+| Parameter | Value |
+|---|---:|
+| Parameters | **11.6M** |
+| Embedding dimension | 384 |
+| Attention heads | 6 |
+| Transformer layers | 6 |
+| Context length | 512 |
+| Dropout | 0.2 |
+| Vocabulary | Custom BPE tokenizer |
 
-## 📊 Results & Observations
-The model achieves a competitive validation loss of **~1.47**. 
+## BPE Tokenizer
 
-**Engineering Insight:** Through this process, I observed that while character-level models might show lower raw loss numbers, the BPE-informed loss represents a higher semantic quality. 
+I implemented a **Byte Pair Encoding (BPE) tokenizer from scratch** based on the approach described in:
 
-* **Character Level (Vocab ~65):** A completely random guess has a loss of $\ln(65) \approx 4.17$.
-* **BPE Level (Vocab 256):** A completely random guess has a loss of $\ln(256) \approx 5.54$.
+- [Andrej Karpathy — Let's build the GPT Tokenizer](https://lnkd.in/d2ejhM-C)
 
-Because the BPE model starts with a much higher "uncertainty floor," its final loss of 1.47 means it has reduced its uncertainty much more significantly than the character model did to reach that same 1.47.
+The tokenizer learns frequent subword merges from the training corpus and converts text into a sequence of token IDs that can be processed by the Transformer.
 
-> "A common misconception is that a BPE-based model with a loss of 1.50 is performing worse than a character-based model with a loss of 1.47. In reality, the BPE model is significantly more efficient for several reasons:
->
-> 1. **Higher Information Density:** Each token in this model represents $\sim2.5$ characters on average. Predicting a complex sub-word token with 1.50 loss is mathematically 'smarter' than predicting a single character with the same loss.
-> 2. **Effective Context Length:** By using BPE, our fixed 256-token context window covers nearly **3x more text** than a character-level model. This allows for superior long-range coherence in the generated Shakespearean prose.
-> 3. **Inference Throughput:** Because the model predicts larger chunks of text at once, it requires $\sim60\%$ fewer forward passes to generate the same amount of text, making it much faster in a production environment."
+The tokenizer also supports converting generated token sequences back into readable text.
 
-### Comparison Summary
+## Sampling
 
-| Metric | Character-Level Baseline | BPE Model |
-| :--- | :--- | :--- |
-| **Vocab Size** | 65 | **256** |
-| **Information per Step** | 1 Character | **~2.5 Characters** |
-| **Context Memory** | ~40 words | **~150 words** |
-| **Inference Speed** | Baseline | **~2.5x Faster** |
-| **True Model Quality** | Good | **Superior (Better Coherence)** |
+The model supports two techniques for controlling text generation:
 
+### Temperature Scaling
 
+Temperature controls the randomness of the probability distribution used during generation.
 
+- Lower temperature → more deterministic outputs
+- Higher temperature → more diverse outputs
 
+### Top-K Sampling
 
-### Sample Generation with output with roughly 10.8M parameters, Byte pair encoding separated words and special chars, no scheduling, step 4500: train loss 1.1427, val loss 1.4735
+Instead of sampling from the entire vocabulary, the model restricts sampling to the **K most probable tokens**.
 
-But hedite your guards, and spirts it;
-Shame like your words she not made your child;
-But therefore the ride I shall over
-And prove thee unterpose them some violent
-As never he to could No wish live,
-I think it bounds; and even expreseming
-My beauteous trenching to the rist!
-It must be dann't: four, and let them note
-and riches shop the penveon of that blood
-In the hount so off this very-state, lawn, fair!
-What's Cominius service? Lords, what shows maist!
-My lord are it some opposite; and therefore
-The mighty, but you'll are the injuret
-Than to the half sil'd itnow who sevention;
-But you would do more scand to suffer the blood.
+Combining Top-K sampling with temperature scaling gives more control over the generated stories.
 
-SICINIUS:
-Nay, sir, it is my true night.
+## SwiGLU
 
-BENVOLIO:
-Sir, I bear you, my lord.
-Behold, chold, behold,
-Standst mine contents his parture in rottent,
-Fetches, good privated being.
-Go to, let not us to-morrow the pestor shade
-But lie that recencies you shall intent me.
-Lo, not the rest,--doemight of disance,
-For fortunation! I'll give my such palace....
+I replaced the standard ReLU activation in the Transformer Feed-Forward Network with **SwiGLU**.
 
----
+Reference:
 
-## Future Roadmap
-* **Optimization Phase:** Introducing a Cosine Decay scheduler to further "polish" the final weights.
-* **Regularization Ablation:** Testing the impact of Weight Decay (0.1) vs. the current zero-decay baseline.
-* Adding rotatory positional embeddings
+- [SwiGLU — GLU Variants Improve Transformer](https://lnkd.in/dBsY5uu9)
 
-my notes:
-https://notability.com/app/note/9e03e81e-e6ad-41b2-b47b-006fa929b588
+This was one of the architectural changes I experimented with to improve the model's generation quality.
 
-Please do not mind the comments in code since they are for my understanding.
+## Learning Rate Scheduling
+
+I implemented **cosine learning-rate decay**, gradually reducing the learning rate during training.
+
+The learning rate follows a cosine schedule between:
+
+```text
+Initial LR = 6e-4
+Minimum LR = 6e-5
